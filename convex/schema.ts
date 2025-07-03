@@ -10,4 +10,8 @@ export default defineSchema({
   numbers: defineTable({
     value: v.number(),
   }),
+  recipesToBeAdded: defineTable({
+    name: v.string(),
+    link: v.string(),
+  }),
 });
