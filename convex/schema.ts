@@ -13,5 +13,7 @@ export default defineSchema({
   recipesToBeAdded: defineTable({
     name: v.string(),
     link: v.string(),
+    addedBy: v.string(),
+    createdAt: v.number(),
   }),
 });
