@@ -13,11 +13,8 @@ export default function SignIn() {
     <div className="flex flex-col gap-8 w-96 mx-auto h-screen justify-center items-center">
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-accent to-destructive bg-clip-text text-transparent">
-          Matveckolistan
+          Veckorecept.nu
         </h1>
-        <p className="text-muted-foreground text-lg">
-          Log in to see the numbers
-        </p>
       </div>
 
       <div className="backdrop-blur-xl bg-card/50 border border-border rounded-2xl p-8 shadow-xl shadow-ring/20 w-full">

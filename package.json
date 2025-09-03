@@ -9,16 +9,20 @@
     "predev": "convex dev --until-success && convex dev --once --run-sh \"node setup.mjs --once\" && convex dashboard",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "gen": "convex-helpers ts-api-spec"
   },
   "dependencies": {
     "@convex-dev/auth": "^0.0.81",
     "@hookform/resolvers": "^5.1.1",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-tabs": "^1.1.13",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "convex": "^1.23.0",
+    "convex-helpers": "^0.1.104",
+    "linkedom": "^0.18.12",
     "lucide-react": "^0.518.0",
     "next": "15.2.3",
     "react": "^19.0.0",

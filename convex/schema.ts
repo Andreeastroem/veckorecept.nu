@@ -7,11 +7,40 @@ import { authTables } from "@convex-dev/auth/server";
 // The schema provides more precise TypeScript types.
 export default defineSchema({
   ...authTables,
-  numbers: defineTable({
-    value: v.number(),
+  recipesAdded: defineTable({
+    link: v.string(),
+    name: v.string(),
+    user: v.id("users"),
+    slug: v.string(),
   }),
   recipesToBeAdded: defineTable({
-    name: v.string(),
     link: v.string(),
+    name: v.string(),
+    user: v.id("users"),
+    slug: v.string(),
   }),
+  ingredients: defineTable({
+    amount: v.union(v.null(), v.array(v.float64())),
+    name: v.string(),
+    recipeLink: v.string(),
+    unit: v.union(v.null(), v.string()),
+  }),
+  recipes: defineTable({
+    slug: v.string(),
+    link: v.string(),
+    name: v.string(),
+    isCrawled: v.boolean(),
+  })
+    .index("slug", ["slug"])
+    .index("link", ["link"])
+    .index("isCrawled", ["isCrawled"]),
+
+  recipeUsers: defineTable({
+    user: v.id("users"),
+    recipe: v.id("recipes"),
+    created_at: v.number(),
+    updated_at: v.optional(v.number()),
+  })
+    .index("user", ["user"])
+    .index("recipe", ["recipe"]),
 });
