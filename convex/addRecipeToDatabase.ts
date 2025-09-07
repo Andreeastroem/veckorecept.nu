@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server.js";
+import { internalMutation, mutation, query } from "./_generated/server.js";
 import { v } from "convex/values";
 
 export type Ingredient = {
@@ -7,24 +7,7 @@ export type Ingredient = {
   name: string;
 };
 
-export const getRecipesToBeAdded = query({
-  args: {},
-  handler: async (ctx) => {
-    return await ctx.db.query("recipesToBeAdded").collect();
-  },
-});
-
-export const getAllUnCrawledRecipes = query({
-  args: {},
-  handler: async (ctx) => {
-    return await ctx.db
-      .query("recipes")
-      .filter((q) => q.eq(q.field("isCrawled"), false))
-      .collect();
-  },
-});
-
-export const addRecipeToDatabase = mutation({
+export const addRecipeToDatabase = internalMutation({
   args: {
     recipe: v.object({
       id: v.id("recipes"),
@@ -38,11 +21,9 @@ export const addRecipeToDatabase = mutation({
         }),
       ),
     }),
-    user: v.id("users"),
-    slug: v.string(),
   },
   handler: async (ctx, args) => {
-    const { recipe, user, slug } = args;
+    const { recipe } = args;
 
     // Check if the recipe already exists
     const existingRecipeIngredients = await ctx.db
@@ -86,28 +67,24 @@ export const addRecipeToDatabase = mutation({
         // If name differs update it
         if (existingRecipe.name !== recipe.name) {
           await ctx.db.patch(existingRecipe._id, {
-            ...existingRecipe,
             name: recipe.name,
           });
         }
 
-        await ctx.db.insert("recipes", {
-          name: recipe.name,
-          link: recipe.link,
-          slug: slug,
+        await ctx.db.patch(existingRecipe._id, {
           isCrawled: false,
         });
-
-        ctx.db.delete(recipe.id);
       }
+
+      // set isCrawled to true
+      ctx.db.patch(recipe.id, {
+        isCrawled: true,
+      });
     } else {
       console.info("Adding new recipe", recipe.name);
       // Add the new recipe to the database
-      await ctx.db.insert("recipes", {
-        name: recipe.name,
-        link: recipe.link,
-        slug: slug,
-        isCrawled: false,
+      await ctx.db.patch(recipe.id, {
+        isCrawled: true,
       });
       recipe.ingredients.forEach(async (ingredient) => {
         await ctx.db.insert("ingredients", {
@@ -117,8 +94,6 @@ export const addRecipeToDatabase = mutation({
           recipeLink: recipe.link,
         });
       });
-
-      await ctx.db.delete(recipe.id);
     }
   },
 });

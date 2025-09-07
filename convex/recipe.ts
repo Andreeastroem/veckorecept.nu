@@ -1,6 +1,9 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalAction } from "./_generated/server";
 import { v } from "convex/values";
+
+import { parseIngredientLine } from "../nlp-api/parser";
+import { crawlRecipes } from "../crawler";
 
 export const getRecipeByLink = query({
   args: {
@@ -118,5 +121,49 @@ export const addRecipeToBeCrawled = mutation({
       created_at: Date.now(),
       updated_at: Date.now(),
     });
+  },
+});
+
+export const getAllUncrawledRecipes = query({
+  args: {},
+  handler: async (ctx) => {
+    const recipes = await ctx.db
+      .query("recipes")
+      .filter((q) => q.eq(q.field("isCrawled"), false))
+      .collect();
+
+    const recipesWithUsers = (
+      await Promise.all(
+        recipes.map(async (recipe) => {
+          return await ctx.db
+            .query("recipeUsers")
+            .withIndex("recipe", (q) => q.eq("recipe", recipe._id))
+            .unique();
+        }),
+      )
+    ).filter((recipeWithUser) => recipeWithUser !== null);
+    //join on users
+
+    return recipes.map((recipe) => {
+      const user = recipesWithUsers.find((ru) => ru.recipe === recipe._id);
+      if (!user) {
+        return null;
+      }
+      return {
+        ...recipe,
+        user: user.user,
+      };
+    });
+  },
+});
+
+export const crawlRecipesAction = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    // Implementation for crawling recipes
+
+    await crawlRecipes(ctx);
+
+    return null;
   },
 });
