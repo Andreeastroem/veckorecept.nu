@@ -1,8 +1,7 @@
 "use client";
 
 import { api } from "@/convex/_generated/api";
-import { getAuthUserId } from "@convex-dev/auth/server";
-import { useConvexAuth, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import Link from "next/link";
 
 export default function RecipeList() {
