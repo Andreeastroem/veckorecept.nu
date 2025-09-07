@@ -11,35 +11,43 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "../ui/form";
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
+} from "../../../components/ui/form";
+import { Input } from "../../../components/ui/input";
+import { Button } from "../../../components/ui/button";
 import { api } from "@/convex/_generated/api";
 import { useMutation } from "convex/react";
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
-  link: z.string().min(1, { message: "Link is required" }),
+  link: z.string().min(1, { message: "External link is required" }),
+  slug: z.string().min(1, { message: "Link is required" }),
 });
 
-export default function AddRecipe() {
+export default function AddRecipeForm({
+  setAddRecipe,
+}: {
+  setAddRecipe: React.Dispatch<boolean>;
+}) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       link: "",
+      slug: "",
     },
   });
 
   const addRecipeToBeCrawledMutation = useMutation(
-    api.recipesNotYetCrawled.addRecipeToBeCrawled,
+    api.recipe.addRecipeToBeCrawled,
   );
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     addRecipeToBeCrawledMutation({
       name: values.name,
       link: values.link,
+      slug: values.slug,
     });
+    form.reset();
   }
 
   return (
@@ -64,16 +72,43 @@ export default function AddRecipe() {
           name="link"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Link</FormLabel>
+              <FormLabel>External link</FormLabel>
               <FormControl>
-                <Input placeholder="Recipe link" {...field} />
+                <Input placeholder="External link to recipe" {...field} />
               </FormControl>
-              <FormDescription>This is the link to the recipe.</FormDescription>
+              <FormDescription>
+                This is the original link to the recipe.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit">Submit</Button>
+        <FormField
+          control={form.control}
+          name="slug"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Link</FormLabel>
+              <FormControl>
+                <Input placeholder="Recipe link" {...field} />
+              </FormControl>
+              <FormDescription>
+                This is the internal link to the recipe
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="flex gap-1.5">
+          <Button type="submit">Submit</Button>
+          <Button
+            variant="ghost"
+            onClick={() => setAddRecipe(false)}
+            className=""
+          >
+            Cancel
+          </Button>
+        </div>
       </form>
     </Form>
   );
