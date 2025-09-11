@@ -6,9 +6,17 @@ const recipeSchema = z.object({
   cookingMethod: z.string().optional(),
   ingredients: z.union([z.array(z.string()), z.string()]).optional(),
   recipeIngredient: z.union([z.array(z.string()), z.string()]).optional(),
+  recipeInstructions: z.optional(
+    z.array(
+      z.object({
+        "@type": z.literal("HowToStep"),
+        text: z.string(),
+      }),
+    ),
+  ),
 });
 
-type RecipeType = z.infer<typeof recipeSchema>;
+export type RecipeType = z.infer<typeof recipeSchema>;
 
 export function findRecipeJsonLD(html: string) {
   return findRecipeJsonLdTagsAmongstLdTags(html);
@@ -17,7 +25,7 @@ export function findRecipeJsonLD(html: string) {
 function findRecipeJsonLdTagsAmongstLdTags(html: string): RecipeType | null {
   const { document } = parseHTML(html);
   const jsonLdTags = document.querySelectorAll(
-    'script[type="application/ld+json"]'
+    'script[type="application/ld+json"]',
   );
 
   let recipeJsonLd: null | Record<string, unknown> = null;
@@ -58,7 +66,7 @@ function findRecipeJsonLdTagsAmongstLdTags(html: string): RecipeType | null {
 }
 
 function exportRecipeJsonFromGraphStructure(
-  json: Record<string, unknown>
+  json: Record<string, unknown>,
 ): Record<string, unknown> | null {
   if (Array.isArray(json["@graph"])) {
     const recipe = json["@graph"].find((item: Record<string, unknown>) => {
@@ -84,13 +92,4 @@ function exportRecipeFromJsonLd(json: Record<string, unknown>) {
   }
 
   return null;
-}
-
-function validateRecipeJsonLd(recipeJsonLd: Record<string, unknown>): boolean {
-  const result = recipeSchema.safeParse(recipeJsonLd);
-  if (!result.success) {
-    console.error("Invalid Recipe JSON-LD", result.error);
-    return false;
-  }
-  return true;
 }
