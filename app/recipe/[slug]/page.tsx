@@ -27,6 +27,13 @@ export default async function RecipePage({ params }: PageProps) {
           </li>
         ))}
       </ul>
+      <ul>
+        {recipe.instructions
+          .sort((a, b) => a.stepNumber - b.stepNumber)
+          .map((instruction) => (
+            <li key={instruction.stepNumber}>{instruction.text}</li>
+          ))}
+      </ul>
     </main>
   );
 }

@@ -43,4 +43,10 @@ export default defineSchema({
   })
     .index("user", ["user"])
     .index("recipe", ["recipe"]),
+
+  recipeInstructions: defineTable({
+    recipeLink: v.string(),
+    stepNumber: v.number(),
+    text: v.string(),
+  }),
 });

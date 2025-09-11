@@ -1,9 +1,9 @@
 // modernCrawler.ts
-import { findRecipeJsonLD } from "./parser.js";
+import { findRecipeJsonLD, RecipeType } from "./parser.js";
 import fetchParsedIngredients from "./ingredient-parser.js";
 import { api, internal } from "../convex/_generated/api.js";
 import { GenericActionCtx } from "convex/server";
-import { DataModel } from "../convex/_generated/dataModel.js";
+import { DataModel, Id } from "../convex/_generated/dataModel.js";
 
 export async function crawlRecipes(ctx: GenericActionCtx<DataModel>) {
   const recipesToCrawl = (
@@ -11,41 +11,42 @@ export async function crawlRecipes(ctx: GenericActionCtx<DataModel>) {
   ).filter((uncrawledRecipes) => uncrawledRecipes !== null);
 
   const pendingCrawls = recipesToCrawl.map(async (recipe) => {
-    return {
-      ingredients: await crawlRecipeFromUrl(recipe.link),
-      name: recipe.name,
-      link: recipe.link,
-      user: recipe.user,
-      id: recipe._id,
-    };
+    return await crawlRecipeFromUrl(
+      recipe.link,
+      recipe.name,
+      recipe.link,
+      recipe.user,
+      recipe._id,
+    );
   });
 
-  const recipes = (await Promise.allSettled(pendingCrawls)).filter((result) => {
-    if (result.status === "fulfilled") {
-      return result.value.ingredients !== null;
-    }
-    return false;
-  });
+  const recipes = await Promise.allSettled(pendingCrawls);
+
+  const validRecipes = recipes
+    .map((recipe) => {
+      if (recipe.status === "fulfilled") {
+        return recipe.value;
+      }
+      console.info("Unable to crawl recipe:", recipe.reason);
+      return null;
+    })
+    .filter((recipe) => recipe !== null);
 
   const recipesAddedToDatabase = await Promise.allSettled(
-    recipes.map(async (result) => {
-      if (result.status === "fulfilled") {
-        const ingredients = result.value.ingredients;
+    validRecipes.map(async (recipe) => {
+      if (recipe) {
+        const ingredients = recipe.ingredients;
         if (ingredients) {
-          await ctx.runMutation(
-            internal.addRecipeToDatabase.addRecipeToDatabase,
-            {
-              recipe: {
-                name: result.value.name,
-                link: result.value.link,
-                id: result.value.id,
-                ingredients,
-              },
+          await ctx.runMutation(internal.recipe.addRecipeToDatabase, {
+            recipe: {
+              name: recipe.name,
+              link: recipe.link,
+              id: recipe.id,
+              ingredients,
+              instructions: recipe.instructions,
             },
-          );
+          });
         }
-      } else {
-        console.error("Failed to crawl recipe:", result.reason);
       }
     }),
   );
@@ -55,7 +56,13 @@ export async function crawlRecipes(ctx: GenericActionCtx<DataModel>) {
   }
 }
 
-async function crawlRecipeFromUrl(url: string) {
+async function crawlRecipeFromUrl(
+  url: string,
+  name: string,
+  link: string,
+  user: string,
+  id: Id<"recipes">,
+) {
   try {
     const res = await fetch(url, {
       headers: { "User-Agent": "RecipeBot/1.0" },
@@ -71,49 +78,67 @@ async function crawlRecipeFromUrl(url: string) {
     const recipejsonLd = findRecipeJsonLD(html);
 
     if (!recipejsonLd) {
-      console.error(`No recipe found in JSON-LD for ${url}`);
+      console.error(`No recipe JSON-LD found in ${url}`);
     }
 
-    return await getIngredientsFromHTML(html);
+    const jsonLd = findRecipeJsonLD(html);
+    if (!jsonLd) {
+      console.error(`No recipe found in JSON-LD for ${url}`);
+      return null;
+    }
+
+    const ingredients = await getIngredientsFromHTML(jsonLd);
+    const instructions = getInstructionsFromHTML(jsonLd);
+
+    return {
+      ingredients,
+      instructions,
+      name: name,
+      link: link,
+      user: user,
+      id: id,
+    };
   } catch (err) {
     console.error(`Failed to fetch ${url}`, err);
     return null;
   }
 }
 
-async function getIngredientsFromHTML(html: string) {
-  const recipeJsonLd = findRecipeJsonLD(html);
-  if (recipeJsonLd) {
-    const ingredientLines =
-      recipeJsonLd.recipeIngredient ?? recipeJsonLd.ingredients ?? [];
-    let ingredients: Pick<
-      DataModel["ingredients"]["document"],
-      "amount" | "unit" | "name"
-    >[] = [];
-    if (!Array.isArray(ingredientLines)) {
-      ingredients = fetchParsedIngredients([ingredientLines]);
-    } else {
-      ingredients = fetchParsedIngredients(ingredientLines);
-    }
-
-    if (!ingredients || ingredients.length === 0) {
-      console.info("No ingredients found in recipe");
-      return null;
-    }
-
-    const normalisedIngredients = ingredients.map((ing) => {
-      return {
-        amount: ing.amount,
-        unit: ing.unit,
-        name: ing.name.replace(/^\s*\/\s*/, "").trim(), // Remove leading slash and trim whitespace
-      };
-    });
-
-    return normalisedIngredients;
-
-    // addToDatabase(recipe, client);
+async function getIngredientsFromHTML(recipeJsonLd: RecipeType) {
+  const ingredientLines =
+    recipeJsonLd.recipeIngredient ?? recipeJsonLd.ingredients ?? [];
+  let ingredients: Pick<
+    DataModel["ingredients"]["document"],
+    "amount" | "unit" | "name"
+  >[] = [];
+  if (!Array.isArray(ingredientLines)) {
+    ingredients = fetchParsedIngredients([ingredientLines]);
   } else {
-    console.info("No recipe found in JSON-LD");
+    ingredients = fetchParsedIngredients(ingredientLines);
+  }
+
+  if (!ingredients || ingredients.length === 0) {
+    console.info("No ingredients found in recipe");
     return null;
   }
+
+  const normalisedIngredients = ingredients.map((ing) => {
+    return {
+      amount: ing.amount,
+      unit: ing.unit,
+      name: ing.name.replace(/^\s*\/\s*/, "").trim(), // Remove leading slash and trim whitespace
+    };
+  });
+
+  return normalisedIngredients;
+}
+
+function getInstructionsFromHTML(recipeJsonLd: RecipeType) {
+  const instructions = recipeJsonLd.recipeInstructions ?? [];
+  return instructions.map((step, idx) => {
+    return {
+      text: step.text,
+      stepNumber: idx + 1,
+    };
+  });
 }

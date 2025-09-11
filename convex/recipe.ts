@@ -1,9 +1,28 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { mutation, query, internalAction } from "./_generated/server";
+import {
+  mutation,
+  query,
+  internalAction,
+  internalMutation,
+} from "./_generated/server";
 import { v } from "convex/values";
 
-import { parseIngredientLine } from "../nlp-api/parser";
 import { crawlRecipes } from "../crawler";
+import {
+  upsertRecipe,
+  addRecipeVArgs,
+} from "./recipeFunctions/upsertFunctions";
+
+export type Ingredient = {
+  amount: Array<number> | null;
+  unit: string | null;
+  name: string;
+};
+
+export type Instruction = {
+  stepNumber: number;
+  text: string;
+};
 
 export const getRecipeByLink = query({
   args: {
@@ -22,7 +41,11 @@ export const getRecipeByLink = query({
       .query("ingredients")
       .filter((q) => q.eq(q.field("recipeLink"), recipe?.link))
       .collect();
-    return { ...recipe, ingredients };
+    const instructions = await ctx.db
+      .query("recipeInstructions")
+      .filter((q) => q.eq(q.field("recipeLink"), recipe?.link))
+      .collect();
+    return { ...recipe, ingredients, instructions };
   },
 });
 
@@ -165,5 +188,26 @@ export const crawlRecipesAction = internalAction({
     await crawlRecipes(ctx);
 
     return null;
+  },
+});
+
+export const addRecipeToDatabase = internalMutation({
+  args: addRecipeVArgs,
+  handler: async (ctx, args) => {
+    const { recipe } = args;
+
+    await upsertRecipe(ctx, args);
+  },
+});
+
+export const recrawlAllRecipesAction = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const allRecipes = await ctx.db.query("recipes").collect();
+    await Promise.all(
+      allRecipes.map((recipe) =>
+        ctx.db.patch(recipe._id, { isCrawled: false }),
+      ),
+    );
   },
 });
