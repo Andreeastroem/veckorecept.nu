@@ -16,9 +16,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Matveckolistan",
   description: "If you need help choosing the food for the week",
-  icons: {
-    icon: "/convex.svg",
-  },
 };
 
 export default function RootLayout({
