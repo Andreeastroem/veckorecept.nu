@@ -16,6 +16,7 @@ import { Input } from "../../../components/ui/input";
 import { Button } from "../../../components/ui/button";
 import { api } from "@/convex/_generated/api";
 import { useMutation } from "convex/react";
+import { useState } from "react";
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
@@ -60,7 +61,18 @@ export default function AddRecipeForm({
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input placeholder="Recipe name" {...field} />
+                <Input
+                  placeholder="Recipe name"
+                  {...field}
+                  onChange={(e) => {
+                    const nameSlug = e.target.value
+                      .toLowerCase()
+                      .replaceAll(" ", "-")
+                      .toLowerCase();
+                    form.setValue("slug", nameSlug);
+                    field.onChange(e);
+                  }}
+                />
               </FormControl>
               <FormDescription>This is the name of the recipe.</FormDescription>
               <FormMessage />
@@ -84,13 +96,12 @@ export default function AddRecipeForm({
           )}
         />
         <FormField
-          control={form.control}
           name="slug"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Link</FormLabel>
               <FormControl>
-                <Input placeholder="Recipe link" {...field} />
+                <Input disabled placeholder="Recipe link" {...field} />
               </FormControl>
               <FormDescription>
                 This is the internal link to the recipe
