@@ -16,7 +16,6 @@ import { Input } from "../../../components/ui/input";
 import { Button } from "../../../components/ui/button";
 import { api } from "@/convex/_generated/api";
 import { useMutation } from "convex/react";
-import { useState } from "react";
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
