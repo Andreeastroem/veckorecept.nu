@@ -41,6 +41,17 @@ export async function upsertIngredients(
     .collect();
 
   if (existingIngredients.length === 0) {
+    // Insert new ingredients
+    await Promise.all(
+      recipe.ingredients.map((ingredient) =>
+        ctx.db.insert("ingredients", {
+          name: ingredient.name,
+          amount: ingredient.amount,
+          unit: ingredient.unit,
+          recipeLink: recipe.link,
+        }),
+      ),
+    );
     return;
   }
 

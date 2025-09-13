@@ -194,8 +194,6 @@ export const crawlRecipesAction = internalAction({
 export const addRecipeToDatabase = internalMutation({
   args: addRecipeVArgs,
   handler: async (ctx, args) => {
-    const { recipe } = args;
-
     await upsertRecipe(ctx, args);
   },
 });
