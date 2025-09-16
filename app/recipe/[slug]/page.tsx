@@ -7,10 +7,9 @@ type PageProps = { params: Promise<{ slug: string }> };
 
 export default async function RecipePage({ params }: PageProps) {
   const { slug } = await params;
-  console.info("slug", slug);
   const recipe = await fetchQuery(api.recipe.getRecipeByLink, { link: slug });
   if (!recipe) {
-    console.info("no recipe");
+    console.error("no recipe");
     return null;
   }
 
