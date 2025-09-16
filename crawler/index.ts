@@ -24,19 +24,15 @@ export async function crawlRecipes(ctx: GenericActionCtx<DataModel>) {
 
   const recipes = await Promise.allSettled(pendingCrawls);
 
-  console.info("recipes", recipes);
-
   const validRecipes = recipes
     .map((recipe) => {
       if (recipe.status === "fulfilled") {
         return recipe.value;
       }
-      console.info("Unable to crawl recipe:", recipe.reason);
+      console.error("Unable to crawl recipe:", recipe.reason);
       return null;
     })
     .filter((recipe) => recipe !== null);
-
-  console.info("valid recipes", validRecipes);
 
   const recipesAddedToDatabase = await Promise.allSettled(
     validRecipes.map(async (recipe) => {
@@ -147,7 +143,7 @@ async function getIngredientsFromHTML(recipeJsonLd: RecipeType) {
   }
 
   if (!ingredients || ingredients.length === 0) {
-    console.info("No ingredients found in recipe");
+    console.error("No ingredients found in recipe");
     return null;
   }
 
@@ -166,7 +162,7 @@ function getInstructionsFromHTML(recipeJsonLd: RecipeType) {
   const instructions = recipeJsonLd.recipeInstructions ?? null;
 
   if (!instructions) {
-    console.info("No instructions found in recipe");
+    console.error("No instructions found in recipe");
     return null;
   }
 
