@@ -3,7 +3,7 @@ import { DataModel } from "../_generated/dataModel.js";
 import { inverseIntersection } from "./intersection";
 
 import { Infer, v } from "convex/values";
-import { Ingredient } from "../recipe.js";
+import { Ingredient } from "../types.js";
 
 export const addRecipeVArgs = v.object({
   recipe: v.object({

@@ -16,6 +16,7 @@ import { Input } from "../../../components/ui/input";
 import { Button } from "../../../components/ui/button";
 import { api } from "@/convex/_generated/api";
 import { useMutation } from "convex/react";
+import { slugify } from "@/lib/utils";
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
@@ -64,11 +65,7 @@ export default function AddRecipeForm({
                   placeholder="Recipe name"
                   {...field}
                   onChange={(e) => {
-                    const nameSlug = e.target.value
-                      .toLowerCase()
-                      .replaceAll(" ", "-")
-                      .toLowerCase();
-                    form.setValue("slug", nameSlug);
+                    form.setValue("slug", slugify(e.target.value));
                     field.onChange(e);
                   }}
                 />

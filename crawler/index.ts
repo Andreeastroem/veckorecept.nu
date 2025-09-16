@@ -1,9 +1,11 @@
 // modernCrawler.ts
-import { findRecipeJsonLD, RecipeType } from "./parser.js";
+import { findRecipeJsonLD, getHTMLBody, RecipeType } from "./parser.js";
 import fetchParsedIngredients from "./ingredient-parser.js";
 import { api, internal } from "../convex/_generated/api.js";
 import { GenericActionCtx } from "convex/server";
 import { DataModel, Id } from "../convex/_generated/dataModel.js";
+import { crawlRecipeFromHTMLBody } from "./openai";
+import { Ingredient, Instruction } from "../convex/types.js";
 
 export async function crawlRecipes(ctx: GenericActionCtx<DataModel>) {
   const recipesToCrawl = (
@@ -27,7 +29,7 @@ export async function crawlRecipes(ctx: GenericActionCtx<DataModel>) {
       if (recipe.status === "fulfilled") {
         return recipe.value;
       }
-      console.info("Unable to crawl recipe:", recipe.reason);
+      console.error("Unable to crawl recipe:", recipe.reason);
       return null;
     })
     .filter((recipe) => recipe !== null);
@@ -36,14 +38,16 @@ export async function crawlRecipes(ctx: GenericActionCtx<DataModel>) {
     validRecipes.map(async (recipe) => {
       if (recipe) {
         const ingredients = recipe.ingredients;
-        if (ingredients) {
+        const instructions = recipe.instructions;
+
+        if (ingredients && instructions) {
           await ctx.runMutation(internal.recipe.addRecipeToDatabase, {
             recipe: {
               name: recipe.name,
               link: recipe.link,
               id: recipe.id,
               ingredients,
-              instructions: recipe.instructions,
+              instructions,
             },
           });
         }
@@ -75,20 +79,41 @@ async function crawlRecipeFromUrl(
 
     const html = await res.text();
 
-    const recipejsonLd = findRecipeJsonLD(html);
+    const jsonLd = findRecipeJsonLD(html);
 
-    if (!recipejsonLd) {
-      console.error(`No recipe JSON-LD found in ${url}`);
+    let ingredients: Ingredient[] | null = null;
+    let instructions: Instruction[] | null = null;
+
+    if (jsonLd !== null) {
+      ingredients = await getIngredientsFromHTML(jsonLd);
+      instructions = getInstructionsFromHTML(jsonLd);
+    }
+    // Depending on what is missing we run different actions to retrieve data
+    // from a llm parsing the html
+    const htmlBody = getHTMLBody(html);
+
+    if (htmlBody && htmlBody.length !== 0) {
+      if (!ingredients && !instructions) {
+        // Crawl for both ingredients and instructions
+        console.info("Crawling using open AI - full recipe");
+        const AICrawledRecipe = await crawlRecipeFromHTMLBody(htmlBody);
+
+        ingredients = AICrawledRecipe.ingredients;
+        instructions = AICrawledRecipe.instructions;
+      } else if (!ingredients) {
+        console.info("Crawling using open AI - only ingredients");
+        // Crawl for ingredients only
+        return null;
+      } else if (!instructions) {
+        console.info("Crawling using open AI - only instructions");
+        // Crawl for instructions only
+        return null;
+      }
     }
 
-    const jsonLd = findRecipeJsonLD(html);
-    if (!jsonLd) {
-      console.error(`No recipe found in JSON-LD for ${url}`);
+    if (!ingredients && !instructions) {
       return null;
     }
-
-    const ingredients = await getIngredientsFromHTML(jsonLd);
-    const instructions = getInstructionsFromHTML(jsonLd);
 
     return {
       ingredients,
@@ -118,7 +143,7 @@ async function getIngredientsFromHTML(recipeJsonLd: RecipeType) {
   }
 
   if (!ingredients || ingredients.length === 0) {
-    console.info("No ingredients found in recipe");
+    console.error("No ingredients found in recipe");
     return null;
   }
 
@@ -134,7 +159,13 @@ async function getIngredientsFromHTML(recipeJsonLd: RecipeType) {
 }
 
 function getInstructionsFromHTML(recipeJsonLd: RecipeType) {
-  const instructions = recipeJsonLd.recipeInstructions ?? [];
+  const instructions = recipeJsonLd.recipeInstructions ?? null;
+
+  if (!instructions) {
+    console.error("No instructions found in recipe");
+    return null;
+  }
+
   return instructions.map((step, idx) => {
     return {
       text: step.text,

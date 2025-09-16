@@ -1,4 +1,4 @@
-import { Ingredient, Instruction } from "../recipe";
+import { Ingredient, Instruction } from "../types";
 import { inverseIntersection } from "./intersection";
 
 describe("inverseIntersection", () => {

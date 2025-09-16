@@ -20,6 +20,7 @@ import type * as recipe from "../recipe.js";
 import type * as recipeFunctions_intersection from "../recipeFunctions/intersection.js";
 import type * as recipeFunctions_upsertFunctions from "../recipeFunctions/upsertFunctions.js";
 import type * as recipesNotYetCrawled from "../recipesNotYetCrawled.js";
+import type * as types from "../types.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -37,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   "recipeFunctions/intersection": typeof recipeFunctions_intersection;
   "recipeFunctions/upsertFunctions": typeof recipeFunctions_upsertFunctions;
   recipesNotYetCrawled: typeof recipesNotYetCrawled;
+  types: typeof types;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

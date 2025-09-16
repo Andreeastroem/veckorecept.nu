@@ -13,17 +13,6 @@ import {
   addRecipeVArgs,
 } from "./recipeFunctions/upsertFunctions";
 
-export type Ingredient = {
-  amount: Array<number> | null;
-  unit: string | null;
-  name: string;
-};
-
-export type Instruction = {
-  stepNumber: number;
-  text: string;
-};
-
 export const getRecipeByLink = query({
   args: {
     link: v.string(),
