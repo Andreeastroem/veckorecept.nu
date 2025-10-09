@@ -26,35 +26,48 @@ export function getHTMLBody(html: string) {
     return null;
   }
 
-  // Remove footer tags
-  const footerTags = body.querySelectorAll("footer");
-  footerTags.forEach((footerTag) => footerTag.remove());
+  // Tags to remove completely
+  const removeSelectors = [
+    "footer",
+    "header",
+    "script",
+    "img",
+    "svg",
+    "figure",
+    "nav",
+    "style", // remove embedded styles
+    "noscript", // useless content
+  ];
 
-  // Remove header tags
-  const headerTags = body.querySelectorAll("header");
-  headerTags.forEach((headerTag) => headerTag.remove());
+  removeSelectors.forEach((selector) => {
+    body.querySelectorAll(selector).forEach((el) => el.remove());
+  });
 
-  // Remove all script tags from body
-  const scripts = body.querySelectorAll("script");
-  scripts.forEach((script) => script.remove());
+  body.querySelectorAll("*").forEach((el) => {
+    for (const attr of el.getAttributeNames()) {
+      el.removeAttribute(attr);
+    }
+  });
 
-  // Remove all image tags from body
-  const imgTags = body.querySelectorAll("img");
-  imgTags.forEach((imgTag) => imgTag.remove());
+  const noisySelectors = [
+    "[class*='share']",
+    "[class*='comment']",
+    "[class*='related']",
+    "[id*='share']",
+    "[id*='comment']",
+    "[id*='related']",
+    "aside",
+    "form",
+    "button",
+  ];
+  noisySelectors.forEach((selector) => {
+    body.querySelectorAll(selector).forEach((el) => el.remove());
+  });
 
-  // Remove all svg tags from body
-  const svgTags = body.querySelectorAll("svg");
-  svgTags.forEach((svgTag) => svgTag.remove());
-
-  // Remove figure tags
-  const figureTags = body.querySelectorAll("figure");
-  figureTags.forEach((figureTag) => figureTag.remove());
-
-  // Remove nav tags
-  const navTags = body.querySelectorAll("nav");
-  navTags.forEach((navTag) => navTag.remove());
-
-  return body.innerHTML;
+  return body.innerHTML
+    .replace(/\s+/g, " ") // collapse extra spaces
+    .replace(/>\s+</g, "><") // remove whitespace between tags
+    .trim();
 }
 
 export function findRecipeJsonLD(html: string) {

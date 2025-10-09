@@ -19,7 +19,6 @@ import type * as http from "../http.js";
 import type * as recipe from "../recipe.js";
 import type * as recipeFunctions_intersection from "../recipeFunctions/intersection.js";
 import type * as recipeFunctions_upsertFunctions from "../recipeFunctions/upsertFunctions.js";
-import type * as recipesNotYetCrawled from "../recipesNotYetCrawled.js";
 import type * as types from "../types.js";
 
 /**
@@ -37,7 +36,6 @@ declare const fullApi: ApiFromModules<{
   recipe: typeof recipe;
   "recipeFunctions/intersection": typeof recipeFunctions_intersection;
   "recipeFunctions/upsertFunctions": typeof recipeFunctions_upsertFunctions;
-  recipesNotYetCrawled: typeof recipesNotYetCrawled;
   types: typeof types;
 }>;
 export declare const api: FilterApi<

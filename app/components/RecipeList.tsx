@@ -5,7 +5,7 @@ import { useQuery } from "convex/react";
 import Link from "next/link";
 
 export default function RecipeList() {
-  const recipes = useQuery(api.recipe.getRecipesByUser);
+  const recipes = useQuery(api.recipe.getRecipeLinksByUser);
 
   if (!recipes) {
     return null;
