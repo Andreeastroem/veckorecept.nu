@@ -7,33 +7,32 @@ import { authTables } from "@convex-dev/auth/server";
 // The schema provides more precise TypeScript types.
 export default defineSchema({
   ...authTables,
-  recipesAdded: defineTable({
-    link: v.string(),
-    name: v.string(),
-    user: v.id("users"),
+
+  recipeLinks: defineTable({
     slug: v.string(),
-  }),
-  recipesToBeAdded: defineTable({
+    name: v.string(),
     link: v.string(),
-    name: v.string(),
-    user: v.id("users"),
-    slug: v.string(),
-  }),
-  ingredients: defineTable({
-    amount: v.union(v.null(), v.array(v.float64())),
-    name: v.string(),
-    recipeLink: v.string(),
-    unit: v.union(v.null(), v.string()),
-  }),
-  recipes: defineTable({
-    slug: v.string(),
-    link: v.string(),
-    name: v.string(),
     isCrawled: v.boolean(),
+    retries: v.number(),
   })
-    .index("slug", ["slug"])
     .index("link", ["link"])
     .index("isCrawled", ["isCrawled"]),
+
+  recipes: defineTable({
+    recipeLinkId: v.id("recipeLinks"),
+    slug: v.string(),
+    name: v.string(),
+    portionSize: v.optional(v.number()),
+  }).index("slug", ["slug"]),
+
+  recipeLinkUsers: defineTable({
+    user: v.id("users"),
+    recipeLinkId: v.id("recipeLinks"),
+    created_at: v.number(),
+    updated_at: v.optional(v.number()),
+  })
+    .index("user", ["user"])
+    .index("recipeLink", ["recipeLinkId"]),
 
   recipeUsers: defineTable({
     user: v.id("users"),
@@ -44,9 +43,32 @@ export default defineSchema({
     .index("user", ["user"])
     .index("recipe", ["recipe"]),
 
+  ingredients: defineTable({
+    amount: v.union(v.null(), v.array(v.float64())),
+    name: v.string(),
+    recipeLink: v.string(),
+    unit: v.union(v.null(), v.string()),
+    recipeId: v.id("recipes"),
+  })
+    .index("recipeId", ["recipeId"])
+    .index("name", ["name"]),
+
   recipeInstructions: defineTable({
     recipeLink: v.string(),
+    recipeLinkId: v.id("recipeLinks"),
     stepNumber: v.number(),
     text: v.string(),
+    recipeId: v.id("recipes"),
+  })
+    .index("recipeLinkId", ["recipeLinkId"])
+    .index("recipeId", ["recipeId"]),
+
+  tags: defineTable({
+    name: v.string(),
+  }),
+
+  recipeTag: defineTable({
+    recipeId: v.id("recipes"),
+    tagId: v.id("tags"),
   }),
 });

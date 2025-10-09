@@ -1,0 +1,66 @@
+erDiagram
+    users {
+        string tokenIdentifier PK
+        string email
+    }
+    recipeLinks {
+        id id PK
+        string slug
+        string name
+        string link
+        boolean isCrawled
+    }
+    recipes {
+        id id PK
+        id recipeLinkId FK
+        string slug
+        string name
+        number portionSize
+    }
+    recipeLinkUsers {
+        id user FK
+        id recipeLinkId FK
+        number created_at
+        number updated_at
+    }
+    recipeUsers {
+        id user FK
+        id recipe FK
+        number created_at
+        number updated_at
+    }
+    ingredients {
+        id id PK
+        float64[] amount
+        string name
+        string recipeLink
+        string unit
+        id recipeId FK
+    }
+    recipeInstructions {
+        id id PK
+        string recipeLink
+        id recipeLinkId FK
+        number stepNumber
+        string text
+        id recipeId FK
+    }
+    tags {
+        id id PK
+        string name
+    }
+    recipeTag {
+        id id PK
+        id recipeId FK
+        id tagId FK
+    }
+
+    users ||--o{ recipeLinkUsers : "creates"
+    users ||--o{ recipeUsers : "saves"
+    recipeLinks ||--o{ recipeLinkUsers : "belongs to"
+    recipeLinks ||--o{ recipes : "has"
+    recipes ||--o{ recipeUsers : "belongs to"
+    recipes ||--o{ ingredients : "contains"
+    recipes ||--o{ recipeInstructions : "has"
+    recipes ||--o{ recipeTag : "has"
+    tags ||--o{ recipeTag : "belongs to"

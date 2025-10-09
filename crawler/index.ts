@@ -8,12 +8,15 @@ import { crawlRecipeFromHTMLBody } from "./openai";
 import { Ingredient, Instruction } from "../convex/types.js";
 
 export async function crawlRecipes(ctx: GenericActionCtx<DataModel>) {
-  const recipesToCrawl = (
+  const recipeLinksToCrawl = (
     await ctx.runQuery(api.recipe.getAllUncrawledRecipes)
   ).filter((uncrawledRecipes) => uncrawledRecipes !== null);
 
-  const pendingCrawls = recipesToCrawl.map(async (recipe) => {
-    return await crawlRecipeFromUrl(
+  const pendingCrawls = recipeLinksToCrawl.map(async (recipe) => {
+    await ctx.runMutation(internal.recipe.incrementRetryOnRecipeLink, {
+      id: recipe._id,
+    });
+    return await crawlRecipesFromUrl(
       recipe.link,
       recipe.name,
       recipe.link,
@@ -35,23 +38,29 @@ export async function crawlRecipes(ctx: GenericActionCtx<DataModel>) {
     .filter((recipe) => recipe !== null);
 
   const recipesAddedToDatabase = await Promise.allSettled(
-    validRecipes.map(async (recipe) => {
-      if (recipe) {
-        const ingredients = recipe.ingredients;
-        const instructions = recipe.instructions;
-
-        if (ingredients && instructions) {
-          await ctx.runMutation(internal.recipe.addRecipeToDatabase, {
-            recipe: {
-              name: recipe.name,
-              link: recipe.link,
-              id: recipe.id,
-              ingredients,
-              instructions,
-            },
-          });
+    validRecipes.map(async (validRecipeLink) => {
+      const completeRecipes = validRecipeLink.filter((recipeLink) => {
+        if (recipeLink.ingredients === null) {
+          return false;
         }
-      }
+        if (recipeLink.instructions === null) {
+          return false;
+        }
+
+        return true;
+      });
+
+      await ctx.runMutation(internal.recipe.addRecipeLinkToDatabase, {
+        recipeLinkId: validRecipeLink[0].recipeLinkId,
+        recipes: completeRecipes.map((recipe) => {
+          return {
+            ingredients: recipe.ingredients,
+            instructions: recipe.instructions,
+            name: recipe.name,
+            link: recipe.link,
+          };
+        }),
+      });
     }),
   );
 
@@ -60,12 +69,12 @@ export async function crawlRecipes(ctx: GenericActionCtx<DataModel>) {
   }
 }
 
-async function crawlRecipeFromUrl(
+async function crawlRecipesFromUrl(
   url: string,
   name: string,
   link: string,
   user: string,
-  id: Id<"recipes">,
+  recipeLinkId: Id<"recipeLinks">,
 ) {
   try {
     const res = await fetch(url, {
@@ -96,10 +105,22 @@ async function crawlRecipeFromUrl(
       if (!ingredients && !instructions) {
         // Crawl for both ingredients and instructions
         console.info("Crawling using open AI - full recipe");
-        const AICrawledRecipe = await crawlRecipeFromHTMLBody(htmlBody);
+        const AICrawledRecipes = await crawlRecipeFromHTMLBody(htmlBody);
 
-        ingredients = AICrawledRecipe.ingredients;
-        instructions = AICrawledRecipe.instructions;
+        if (!AICrawledRecipes) {
+          return null;
+        }
+
+        return AICrawledRecipes.map((recipe) => {
+          return {
+            ingredients: recipe.ingredients,
+            instructions: recipe.instructions,
+            name: name,
+            link: link,
+            user: user,
+            recipeLinkId,
+          };
+        });
       } else if (!ingredients) {
         console.info("Crawling using open AI - only ingredients");
         // Crawl for ingredients only
@@ -115,14 +136,16 @@ async function crawlRecipeFromUrl(
       return null;
     }
 
-    return {
-      ingredients,
-      instructions,
-      name: name,
-      link: link,
-      user: user,
-      id: id,
-    };
+    return [
+      {
+        ingredients,
+        instructions,
+        name: name,
+        link: link,
+        user: user,
+        recipeLinkId,
+      },
+    ];
   } catch (err) {
     console.error(`Failed to fetch ${url}`, err);
     return null;
