@@ -25,9 +25,9 @@ const formSchema = z.object({
 });
 
 export default function AddRecipeForm({
-  setAddRecipe,
+  setIsOpen,
 }: {
-  setAddRecipe: React.Dispatch<boolean>;
+  setIsOpen: React.Dispatch<boolean>;
 }) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -53,7 +53,10 @@ export default function AddRecipeForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-8 p-2 md:p-0"
+      >
         <FormField
           control={form.control}
           name="name"
@@ -106,12 +109,14 @@ export default function AddRecipeForm({
             </FormItem>
           )}
         />
-        <div className="flex gap-1.5">
-          <Button type="submit">Submit</Button>
+        <div className="grid grid-cols-2">
+          <Button className="w-full bg-gray-200" type="submit">
+            Submit
+          </Button>
           <Button
             variant="ghost"
-            onClick={() => setAddRecipe(false)}
-            className=""
+            onClick={() => setIsOpen(false)}
+            className="w-full"
           >
             Cancel
           </Button>
