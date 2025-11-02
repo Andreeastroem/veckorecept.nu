@@ -27,7 +27,7 @@ There are some caveats regarding the instructions field:
 `;
 
 const outputFormatSchema = z.object({
-  recipes: z.array(recipeSchema),
+  recipes: z.array(recipeSchema).nullable(),
 });
 
 export async function crawlRecipeFromHTMLBody(
@@ -41,6 +41,10 @@ export async function crawlRecipeFromHTMLBody(
           role: "system",
           content:
             "You will extract the recipes from the supplied html content, do not add anything not supplied in the response format. If there are multiple recipes you will connect the correct ingredients to the correct recipe",
+        },
+        {
+          role: "system",
+          content: "If no recipe can be parsed then return null",
         },
         {
           role: "system",
