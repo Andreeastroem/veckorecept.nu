@@ -236,7 +236,9 @@ export const getAllUncrawledRecipes = query({
   handler: async (ctx) => {
     const recipeLinks = await ctx.db
       .query("recipeLinks")
-      .filter((q) => q.eq(q.field("isCrawled"), false))
+      .filter((q) =>
+        q.and(q.eq(q.field("isCrawled"), false), q.lt(q.field("retries"), 5)),
+      )
       .collect();
 
     return (
