@@ -36,8 +36,8 @@ function Content() {
 
 function RecipeTabs() {
   return (
-    <Tabs className="">
-      <TabsList defaultValue="your-recipes" className="bg-accent">
+    <Tabs defaultValue="your-recipes">
+      <TabsList className="bg-accent">
         <TabsTrigger
           className="active:bg-card overflow-ellipsis"
           value="your-recipes"
