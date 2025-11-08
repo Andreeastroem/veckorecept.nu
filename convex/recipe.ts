@@ -12,6 +12,7 @@ import {
   upsertRecipeLink,
   addRecipeLinkVArgs,
 } from "./recipeFunctions/upsertFunctions";
+import { paginationOptsValidator } from "convex/server";
 
 export const getRecipeBySlug = query({
   args: {
@@ -262,6 +263,21 @@ export const getAllUncrawledRecipes = query({
         }),
       )
     ).filter((uncrawledRecipe) => uncrawledRecipe !== null);
+  },
+});
+
+export const getCrawledRecipeLinksPagination = query({
+  args: {
+    paginationOpts: paginationOptsValidator,
+    filterOptions: v.optional(v.array(v.union(v.literal("category")))),
+  },
+  handler: async (ctx, args) => {
+    const paginationResult = await ctx.db
+      .query("recipeLinks")
+      .filter((q) => q.eq(q.field("isCrawled"), true))
+      .paginate(args.paginationOpts);
+
+    return paginationResult;
   },
 });
 
