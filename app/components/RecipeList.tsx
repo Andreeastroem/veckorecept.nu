@@ -31,7 +31,7 @@ export default function RecipeLinkList() {
           <ViewMoreList
             items={recipeLinks.map((recipeLink) => {
               return (
-                <div
+                <li
                   key={recipeLink._id}
                   className="flex justify-between w-full backdrop-blur-sm bg-accent border border-border rounded-xl p-4 hover:bg-accent/90 transition-colors duration-300"
                 >
@@ -45,7 +45,7 @@ export default function RecipeLinkList() {
                     isCrawled={recipeLink.isCrawled}
                     retries={recipeLink.retries}
                   />
-                </div>
+                </li>
               );
             })}
             initialVisible={5}
