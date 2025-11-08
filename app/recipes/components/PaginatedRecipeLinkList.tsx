@@ -1,5 +1,6 @@
 "use client";
 
+import RecipeLinkListCard from "@/components/recipeLinks/ListCard";
 import {
   Pagination,
   PaginationContent,
@@ -91,7 +92,7 @@ export default function PaginatedRecipeLinkList() {
 
       <ul className="space-y-1">
         {pageItems.map((recipe) => (
-          <li key={recipe._id}>{recipe.name}</li>
+          <RecipeLinkListCard recipe={recipe} />
         ))}
         {/* Loading skeleton rows (optional) */}
         {pagination.isLoading && pageItems.length === 0 && (
