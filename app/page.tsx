@@ -4,6 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MainLayout, HeaderLayout } from "./components/PageLayout";
 
 import { List, Heart } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   return (
@@ -25,7 +27,10 @@ export default function Home() {
 function Content() {
   return (
     <div className="space-y-6">
-      <AddRecipe />
+      <div className="flex gap-2">
+        <AddRecipe />
+        <AllRecipesLink />
+      </div>
       {/* Placeholder content with glassmorphism */}
       <div className="backdrop-blur-xl bg-card/50 border border-border rounded-2xl p-6 shadow-xl shadow-ring/20">
         <RecipeTabs />
