@@ -5,19 +5,12 @@ import { MainLayout, HeaderLayout } from "./components/PageLayout";
 
 import { List, Heart } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 
 export default function Home() {
   return (
     <>
       <HeaderLayout />
       <MainLayout>
-        <div className="text-center space-y-4">
-          <h1 className="lg:text-6xl text-3xl font-bold text-primary">
-            Veckorecept.nu
-          </h1>
-          <p className="text-muted-foreground text-lg">En vecka i taget</p>
-        </div>
         <Content />
       </MainLayout>
     </>
@@ -26,16 +19,28 @@ export default function Home() {
 
 function Content() {
   return (
-    <div className="space-y-6">
-      <div className="flex gap-2">
-        <AddRecipe />
-        <AllRecipesLink />
+    <div className="flex flex-col gap-6">
+      <AddRecipe />
+      <div className="flex gap-6">
+        <MenuLink href={"/recipes"} text="All recipes" />
+        <MenuLink href="/generate" text="Generate" />
       </div>
       {/* Placeholder content with glassmorphism */}
       <div className="backdrop-blur-xl bg-card/50 border border-border rounded-2xl p-6 shadow-xl shadow-ring/20">
         <RecipeTabs />
       </div>
     </div>
+  );
+}
+
+function MenuLink({ href, text }: { href: string; text: string }) {
+  return (
+    <Link
+      href={href}
+      className="backdrop-blur-xl bg-card/50 border border-border rounded-2xl p-6 shadow-xl shadow-ring/20 w-full text-center"
+    >
+      {text}
+    </Link>
   );
 }
 
