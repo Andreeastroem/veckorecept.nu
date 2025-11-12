@@ -1,6 +1,6 @@
 "use client";
 
-import RecipeLinkListCard from "@/components/recipeLinks/ListCard";
+import RecipeLinkListCard from "@/components/recipe/ListCard";
 import {
   Pagination,
   PaginationContent,
