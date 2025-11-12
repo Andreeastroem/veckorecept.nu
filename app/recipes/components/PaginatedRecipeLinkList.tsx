@@ -92,7 +92,7 @@ export default function PaginatedRecipeLinkList() {
 
       <ul className="space-y-1">
         {pageItems.map((recipe) => (
-          <RecipeLinkListCard recipe={recipe} />
+          <RecipeLinkListCard key={recipe._id} recipe={recipe} />
         ))}
         {/* Loading skeleton rows (optional) */}
         {pagination.isLoading && pageItems.length === 0 && (

@@ -3,10 +3,13 @@ import Link from "next/link";
 
 export function HeaderLayout() {
   return (
-    <header className="mx-4 max-w-[640px] md:mx-auto sticky top-0 z-10 backdrop-blur-xl bg-background/20 border-b border-border p-4 flex flex-row justify-between items-center rounded-b-2xl shadow-2xl shadow-ring/20">
-      <Link href="/" className="hover:underline">
-        <h1 className="text-2xl font-bold text-primary">Veckorecept.nu</h1>
-      </Link>
+    <header className="flex justify-between px-8 py-4 items-center md:max-w-[640px] mx-auto">
+      <div>
+        <Link href="/" className="hover:underline">
+          <h1 className="text-2xl font-bold text-primary">Veckorecept.nu</h1>
+        </Link>
+        <p className="text-sm">En vecka i taget</p>
+      </div>
       <SignOutButton />
     </header>
   );
